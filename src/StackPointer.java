@@ -1,5 +1,6 @@
 
 public class StackPointer {
+	
 	public StackPointer(){
 		data = new int[4];
 	}
