@@ -1,19 +1,35 @@
 import java.util.HashMap;
 
 public class Computer {
-	Memory instructionMemory;
-	
+	private Memory instructionMemory;
+	private DataMemory dataMemory;
+	private String[][] labelTable;
 	public Computer(String assembly){
+		labelTable = new String[16][3];
 		instructionMemory = new Memory(32,11);
+		dataMemory = new DataMemory(16, 4);
 		convert(assembly);
+		updateLabels();
 	}
 	
-	/* Converter */
+	
+	/* Functions */
+	/* updates label table on GUI */
+	public void updateLabels(){
+		for (int i = 0; i < labelTable.length; i++) {
+			if(labelTable[i][0]!=null){
+				Main.tableLabel.getModel().setValueAt(labelTable[i][0], i, 0);
+				Main.tableLabel.getModel().setValueAt(labelTable[i][1], i, 1);
+				Main.tableLabel.getModel().setValueAt(convertNumber(labelTable[i][2],2), i, 2);
+			}
+		}
+	}
+	/* CONVERTER */
 	/* Converter attr. */
 	String content[][];
 	boolean parseFail;
 	HashMap<String, String> opcodes, registers;
-	/* Convert funcs */
+	/* Converter funcs */
 	public void convert(String text){	
 		parseFail = false;
 		
@@ -67,7 +83,6 @@ public class Computer {
 					
 				}
 				else if(!temp.trim().equals("") && text.charAt(i) == ' '){
-					System.out.println(row+","+column+" "+temp);
 					content[row][column] = temp;
 					temp = "";
 					column++;
@@ -81,52 +96,95 @@ public class Computer {
 				
 		}
 		
-		/* Give meanings to the commands */
+		
 		identify();
 	}
+	/* Parse the expression */
 	public void identify(){
 		String out;
+		boolean flag = true; // instruction or data
 		int count = 0;
 		for (int i = 0; i < content.length; i++) {
 			out = "";
-			if(!opcodes.containsKey(content[i][0])){
-				if(!content[i][0].equals("ORG")){
-					parseFail = true;
-					out = "-1";
-				}
-			}
-			else if(content[i][0].equals("HLT")){
-				break;
-			}
-			else{
-				out = out.concat(opcodes.get(content[i][0]));
-				String arguments[] = content[i][1].split(",");
-				for (int j = 0; j < arguments.length; j++) {
-					if(registers.containsKey(arguments[j]))
-						out = out.concat(registers.get(arguments[j]));
-					else if(arguments[arguments.length-1].charAt(0)=='#'){
-						out = "1".concat(out);
-						out = out.concat(convertNumber(arguments[1].substring(1), 2));
-					}
-					else if(arguments[arguments.length-1].charAt(0)=='@'){
-						out = "0".concat(out);
-					}
-					else{
+			if(flag){
+				if(!opcodes.containsKey(content[i][0])){
+					if(!content[i][0].equals("ORG") && !content[i][0].equals("\rORG")){
 						parseFail = true;
 						out = "-1";
 					}
+					else if(content[i][1].equals("D")){ 
+						flag = false;
+						count = 0;
+						continue;
+					}
+					else if(content[i][1].equals("C")){
+						count = Integer.parseInt(content[i][2]);
+						Main.tableInstructionCounter = count;
+						continue;
+					}
+			
+				}
+				else if(content[i][0].equals("HLT")){
+					out = "01000000000";
+				}
+				else{
+					out = out.concat(opcodes.get(content[i][0]));
+					String arguments[] = content[i][1].split(",");
+					for (int j = 0; j < arguments.length; j++) {
+						if(registers.containsKey(arguments[j]))
+							out = out.concat(registers.get(arguments[j]));
+						else if(arguments[arguments.length-1].charAt(0)=='#'){
+							out = "1".concat(out);
+							out = out.concat(convertNumber(arguments[1].substring(1), 2));
+						}
+						else if(arguments[arguments.length-1].charAt(0)=='@'){
+							out = "0".concat(out);
+						}
+						else{
+							parseFail = true;
+							out = "-1";
+						}
+					}
+				}
+				for (int j = out.length(); j < 11; j++) {
+					out = out.concat("0");
+				}
+				instructionMemory.add(out, count);
+				count++;
+			}
+			else{
+				String label, value, adr;
+				if(content[i][0].contains(":")){
+					label = content[i][0].split(":")[0].trim();
+					switch(content[i][1]){
+					case "BIN":
+						value = convertNumber(content[i][2], 2);
+						break;
+					case "HEX":
+						value = convertNumber(content[i][2], 8);
+						break;
+					default:
+						value = content[i][2];
+						for (int j = value.length(); j < 4; j++) {
+							value = "0".concat(value);
+						}
+						break;
+					}
+					adr = String.valueOf(count);
+					labelTable[count][0] = label;
+					labelTable[count][1] = value;
+					labelTable[count][2] = adr;
+					dataMemory.add(value);
+					count++;
+				}
+				else{
+					parseFail=true;
+					out = "-1";
 				}
 			}
-			for (int j = out.length(); j < 11; j++) {
-				out = out.concat("0");
-			}
-			System.out.println(out);
-			instructionMemory.add(out, count);
-			count++;
 		}
 	}
-	
-	/* Take subarray */
+	/* Take sub array */
 	public String[] slice(String[] array, int start, int end){
 		String[] temp = new String[end-start];
 		int j = 0;

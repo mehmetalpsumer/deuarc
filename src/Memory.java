@@ -1,36 +1,28 @@
 
 public class Memory {
 	/* Attributes */
-	private boolean read, write;
-	private String data[];
+	protected boolean read;
+	protected String data[];
 	
 	/* Constructor */
 	public Memory(int row, int length){
 		data = new String[row];
 		read = true;
-		write = true;
+		
 	}
 	
 	/* Methods */
 	/* add new data */
 	public void add(String val, int index){
-		if(write){
-			if(data[index] == null)
-				data[index] = val;
-			else
-				System.out.println("The cell is already occupied.");
+		if(data[index] == null){
+			data[index] = val;
+			Main.tableInstruction.getModel().setValueAt(val, index, 1);
+			Main.tableInstruction.getModel().setValueAt(Main.tableInstructionCounter, index, 0);
+			Main.tableInstructionCounter++;
 		}
-		else{
-			System.out.println("Writing is not enabled to memory.");
-		}
-	}
-	/* remove data */
-	public void remove(int index){
-		if(write){
-			if(data[index] != null) data[index] = null;
-			else System.out.println("The cell is already empty.");
-		}
-		else System.out.println("");
+		else
+			System.out.println("The cell is already occupied.");
+		
 	}
 	/* fetch data */
 	public String get(int index){
