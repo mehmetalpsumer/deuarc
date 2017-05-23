@@ -16,11 +16,11 @@ public class DataMemory extends Memory {
 	/* Functions */
 	/* add new data (initialize)*/
 	static int address = 0;
-	public void add(String val){
-		if(data[address] == null){
-			data[address] = val;
-			Main.tableData.getModel().setValueAt(val, address, 1);
-			address++;
+	public void add(String val, int index){
+		if(data[index] == null){
+			data[index] = val;
+			Main.tableData.getModel().setValueAt(val, index, 1);
+			index++;
 		}
 		else
 			System.out.println("The cell is already occupied.");

@@ -1,37 +1,117 @@
 import java.util.HashMap;
 
 public class Computer {
-	private Memory instructionMemory;
+	/* Attributes */
+	private InstructionMemory instructionMemory;
 	private DataMemory dataMemory;
+	private Register inpr, outr, addressRegister;
+	private InstructionRegister instructionRegister;
+	private Register rgs[];
+	private ProgramCounter programCounter;
+	private StackPointer stackPointer;
+	private SequenceCounter sc;
 	private String[][] labelTable;
+	
+	/* Constructor */
 	public Computer(String assembly){
+		/* GENERATE */
+		/* label table */
 		labelTable = new String[16][3];
-		instructionMemory = new Memory(32,11);
+		/* memory segments */
+		instructionMemory = new InstructionMemory();
 		dataMemory = new DataMemory(16, 4);
-		convert(assembly);
+		/* registers */
+		addressRegister = new Register();
+		instructionRegister = new InstructionRegister();
+		programCounter = new ProgramCounter();
+		stackPointer = new StackPointer();
+		sc = new SequenceCounter();
+		rgs = new Register[3];
+		for(int i=0; i<rgs.length; i++)
+			rgs[i] = new Register();
+		inpr= new Register();
+		outr = new Register();
+		/* RUN */
+		convert(assembly.replaceAll("\\r", ""));
 		updateLabels();
+		
 	}
 	
 	
 	/* Functions */
-	/* updates label table on GUI */
-	public void updateLabels(){
-		for (int i = 0; i < labelTable.length; i++) {
-			if(labelTable[i][0]!=null){
-				Main.tableLabel.getModel().setValueAt(labelTable[i][0], i, 0);
-				Main.tableLabel.getModel().setValueAt(labelTable[i][1], i, 1);
-				Main.tableLabel.getModel().setValueAt(convertNumber(labelTable[i][2],2), i, 2);
+	/* run the computer after instructions are retrieved */
+	public void iterate(){
+		int op=-1;
+		String q, s2, s1, d;
+		
+		/* Fetch */
+		if(sc.getT() == 0){
+			instructionRegister.setInstruction(instructionMemory.getInstruction(programCounter.data));
+			Main.tf_ir.setText(instructionRegister.getInstruction().getString());
+			Main.tf_ir.repaint();
+			Main.curMicro.setText("T0: IR <- IM["+programCounter.getData()+"]");
+			Main.curMicro.repaint();
+			sc.increase();
+		}
+		else if(sc.getT() == 1){
+			programCounter.increase();
+			Main.tf_pc.setText(convertNumber(String.valueOf(programCounter.getData()), 10, 2, 4));
+			Main.curMicro.setText("T1: PC <- "+(programCounter.data+1));
+			Main.curMicro.repaint();
+			sc.increase();
+		}
+		
+		/* Decode */
+		else if(sc.getT() == 2){
+			q = instructionRegister.getInstruction().getString().charAt(0)+"";
+			op = Integer.parseInt(instructionRegister.getInstruction().getString().substring(1, 5));
+			d = instructionRegister.getInstruction().getString().substring(5, 7);
+			s1 = instructionRegister.getInstruction().getString().substring(7,9);
+			s2 = instructionRegister.getInstruction().getString().substring(9);
+			Main.curMicro.setText("T2: D0..D15 <- "+op+", Q <- "+q+",\n S2 <- "+s2+", S1 <- "+s1+", D <- "+d);
+			Main.curMicro.repaint();
+			sc.clear();
+		}
+		
+		/* Execute */
+		else if(sc.getT() == 3){
+			switch(op){
+			case 1:
+				//rgs[Integer.parseInt(d)].setData();
+				break;
 			}
 		}
+		
+	
+		
+	}	/* updates label table on GUI */
+	public void updateLabels(){
+		int i=0;
+		for(String[] label:labelTable){
+			if(label[0]!=null){
+				Main.tableLabel.getModel().setValueAt(label[0], i, 0);
+				Main.tableLabel.getModel().setValueAt(label[1], i, 1);
+				Main.tableLabel.getModel().setValueAt(convertNumber(label[2], 10, 2, 4), i, 2);
+				i++;
+			}
+			Main.tableLabel.repaint();
+		}
+		
 	}
+	
 	/* CONVERTER */
 	/* Converter attr. */
 	String content[][];
-	boolean parseFail;
 	HashMap<String, String> opcodes, registers;
 	/* Converter funcs */
 	public void convert(String text){	
-		parseFail = false;
+		draw();
+		
+		String tempa[] = text.split("\n");
+		String contentJagged[][] = new String[tempa.length][];
+		for (int i = 0; i < contentJagged.length; i++) {
+			contentJagged[i] = new String[tempa[i].split(" ").length];
+		}
 		
 		/* Describe opcodes */
 		opcodes = new HashMap<String, String>();
@@ -75,12 +155,10 @@ public class Computer {
 		for (int i = 0; i < text.length(); i++) {
 			if(text.charAt(i) == '%')
 				isComment = true;
-			char a = text.charAt(i);
 	
 			if(!isComment){
 				if(text.charAt(i) != ' ' && text.charAt(i) != '\n'){
 					temp = temp.concat(""+text.charAt(i));
-					
 				}
 				else if(!temp.trim().equals("") && text.charAt(i) == ' '){
 					content[row][column] = temp;
@@ -95,94 +173,291 @@ public class Computer {
 			}
 				
 		}
-		
+		for (int i = 0; i < content.length; i++) {
+			Main.tableAssembly.getModel().setValueAt(String.join(" ", content[i]).replaceAll("null", ""), i, 0);
+			Main.tableAssembly.changeSelection(i, 0, false, false);
+		}
 		
 		identify();
 	}
 	/* Parse the expression */
 	public void identify(){
-		String out;
-		boolean flag = true; // instruction or data
-		int count = 0;
+		String code[] = new String[32];
+		String rgs[];
+		boolean isMemory = false; // instruction or data
+		int mc=0, pc=0, lc=0;
+		String tmp;
+		
+		/* Go through all lines */
 		for (int i = 0; i < content.length; i++) {
-			out = "";
-			if(flag){
-				if(!opcodes.containsKey(content[i][0])){
-					if(!content[i][0].equals("ORG") && !content[i][0].equals("\rORG")){
-						parseFail = true;
-						out = "-1";
-					}
-					else if(content[i][1].equals("D")){ 
-						flag = false;
-						count = 0;
-						continue;
-					}
-					else if(content[i][1].equals("C")){
-						count = Integer.parseInt(content[i][2]);
-						Main.tableInstructionCounter = count;
-						continue;
-					}
+			tmp = "";
+			rgs = null;
 			
+			switch(content[i][0]){
+			/* Beginning */
+			case "ORG":
+				/* Instruction Segment */
+				if(content[i][1].equals("C")){
+					isMemory = false;
+					pc = Integer.parseInt(content[i][2]); // set program counter
+					programCounter.setData(pc);
 				}
-				else if(content[i][0].equals("HLT")){
-					out = "01000000000";
+				/* Data Memory Segment */
+				else if(content[i][1].equals("D")){
+					isMemory = true;
+					mc = Integer.parseInt(content[i][2]); // memory counter
 				}
-				else{
-					out = out.concat(opcodes.get(content[i][0]));
-					String arguments[] = content[i][1].split(",");
-					for (int j = 0; j < arguments.length; j++) {
-						if(registers.containsKey(arguments[j]))
-							out = out.concat(registers.get(arguments[j]));
-						else if(arguments[arguments.length-1].charAt(0)=='#'){
-							out = "1".concat(out);
-							out = out.concat(convertNumber(arguments[1].substring(1), 2));
+				break;
+			
+			/* Halt */
+			case "HLT":
+				code[pc] = "01000000000";
+				pc++;
+				break;
+			
+			/***** Arithmetic and Logic Operations *****/
+			/* Addition */
+			case "ADD":
+				rgs = content[i][1].split(","); 
+				tmp = "0".concat(opcodes.get("ADD").concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat(registers.get(rgs[2])))));
+				code[pc] = tmp;
+				pc++;
+				break;
+			
+			/* Increment */
+			case "INC":
+				rgs = content[i][1].split(","); 
+				tmp = "0".concat(opcodes.get("INC").concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat("00"))));
+				code[pc] = tmp;
+				pc++;
+				break;
+			
+			
+			/* Double */
+			case "DBL":
+				rgs = content[i][1].split(","); 
+				tmp = "0".concat(opcodes.get("DBL").concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat("00"))));
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* Divide by Two */
+			case "DBT":
+				rgs = content[i][1].split(","); 
+				tmp = "0".concat(opcodes.get("DBT").concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat("00"))));
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* NOT - Complement */
+			case "NOT":
+				rgs = content[i][1].split(","); 
+				tmp = "0".concat(opcodes.get("NOT").concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat("00"))));
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* And */
+			case "AND":
+				rgs = content[i][1].split(","); 
+				tmp = "0".concat(opcodes.get("AND").concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat(registers.get(rgs[2])))));
+				code[pc] = tmp;
+				pc++;
+				break;
+			
+			/***** Data Transfer *****/
+			/* Load */
+			case "LD":
+				rgs = content[i][1].split(",");
+				if(rgs[rgs.length-1].contains("#")) tmp = "1";
+				else tmp = "0";
+				tmp = tmp.concat(opcodes.get("LD").concat(registers.get(rgs[0])));
+				if(tmp.charAt(0)=='1') tmp = tmp.concat(convertNumber(rgs[rgs.length-1].substring(1), 10, 2, 4));
+				else{ 
+					for (int j = 0; j < content.length; j++) {
+						if(content[j][0]!=null && content[j][0].replaceAll(":", "").equals(rgs[rgs.length-1].replaceAll("@", ""))){
+							if(content[j][1].equals("DEC")){
+								tmp = tmp.concat(convertNumber(content[j][2], 10, 2, 4));
+							}
+							else if(content[j][1].equals("HEX")){
+								tmp = tmp.concat(convertNumber(content[j][2], 16, 2, 4));
+							}
+							else{
+								tmp = tmp.concat(convertNumber(content[j][2], 2, 2, 4));
+							}
 						}
-						else if(arguments[arguments.length-1].charAt(0)=='@'){
-							out = "0".concat(out);
+					}
+				}
+				code[pc] = tmp;
+				pc++;
+				break;	
+			
+			/* Store */
+			case "ST":
+				rgs = content[i][1].split(",");
+				if(rgs[rgs.length-1].contains("#")) tmp = "1";
+				else tmp = "0";
+				tmp = tmp.concat(opcodes.get("ST").concat(registers.get(rgs[0])));
+				if(tmp.charAt(0)=='1') tmp.concat(convertNumber(rgs[rgs.length-1].substring(1), 10, 2, 4));
+				else{ 
+					for (int j = 0; j < content.length; j++) {
+						if(content[j][0]!=null && content[j][0].replaceAll(":", "").equals(rgs[rgs.length-1].replaceAll("@", ""))){
+							if(content[j][1].equals("DEC")){
+								tmp = tmp.concat(convertNumber(content[j][2], 10, 2, 4));
+							}
+							else if(content[j][1].equals("HEX")){
+								tmp = tmp.concat(convertNumber(content[j][2], 16, 2, 4));
+							}
+							else{
+								tmp = tmp.concat(convertNumber(content[j][2], 2, 2, 4));
+							}
+						}
+					}
+				}
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* Transfer */
+			case "TSF":
+				rgs = content[i][1].split(",");
+				tmp = tmp.concat("0").concat(opcodes.get("TSF")).concat(registers.get(rgs[0]).concat(registers.get(rgs[1]).concat("00")));
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/***** Program Control *****/
+			/* Call */
+			case "CAL":
+				tmp = tmp.concat("0").concat(opcodes.get("CAL")).concat("0");
+				/* checks if it is an integer */
+				if(content[i][1].matches("^-?\\d+$"))
+					tmp = tmp.concat(convertNumber(content[i][1], 10, 2, 5));
+				else{
+					int pctemp = pc+1;
+					for (int j = i+1; j < rgs.length; j++) {
+						if(content[j][0].substring(0, content[j][0].length()-1).equals(content[i][1])){
+							break;
 						}
 						else{
-							parseFail = true;
-							out = "-1";
+							pctemp++;
 						}
 					}
+					tmp = tmp.concat(convertNumber(String.valueOf(pctemp), 10, 2, 5));
 				}
-				for (int j = out.length(); j < 11; j++) {
-					out = out.concat("0");
-				}
-				instructionMemory.add(out, count);
-				count++;
-			}
-			else{
-				String label, value, adr;
-				if(content[i][0].contains(":")){
-					label = content[i][0].split(":")[0].trim();
-					switch(content[i][1]){
-					case "BIN":
-						value = convertNumber(content[i][2], 2);
-						break;
-					case "HEX":
-						value = convertNumber(content[i][2], 8);
-						break;
-					default:
-						value = content[i][2];
-						for (int j = value.length(); j < 4; j++) {
-							value = "0".concat(value);
+				code[pc] = tmp;
+				pc++;
+				break;
+			
+			/* Return */
+			case "RET":
+				tmp = "0".concat(opcodes.get("RET").concat("000000"));
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* Jump */
+			case "JMP":
+				
+			
+			
+			/* Jump Relatively */
+			case "JMR":
+				tmp = "0".concat(opcodes.get("JMR")).concat("00");
+				if(content[i][1].contains("-")){
+					String num = convertNumber(content[i][1].substring(1), 10, 2, 4);
+					String numTmp = "";
+					boolean flag = false;
+					for (int j = num.length()-1; j >= 0; j--) {
+						if(flag){
+							if(num.charAt(j)=='1') numTmp = numTmp.concat("0");
+							else if(num.charAt(j)=='0') numTmp = numTmp.concat("1");	
 						}
-						break;
+						else{
+						    if(num.charAt(j)=='1'){ 
+						    	numTmp = numTmp.concat("1");
+						    	flag = true;
+						    }
+							else if(num.charAt(j)=='0') numTmp = numTmp.concat("0");	
+						}
+						
 					}
-					adr = String.valueOf(count);
-					labelTable[count][0] = label;
-					labelTable[count][1] = value;
-					labelTable[count][2] = adr;
-					dataMemory.add(value);
-					count++;
+					tmp = tmp.concat(new StringBuilder(numTmp).reverse().toString());
 				}
 				else{
-					parseFail=true;
-					out = "-1";
+					tmp = tmp.concat(convertNumber(content[i][1], 10, 2, 4));
+				}
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* Push */
+			case "PSH":
+				tmp = "0".concat(opcodes.get("PSH").concat("0"));
+				if(content[i][1].matches("^-?\\d+$"))
+					tmp = tmp.concat(convertNumber(content[i][1], 10, 2, 5));
+				code[pc] = tmp;
+				pc++;
+				break;
+				
+			/* Pop */
+			case "POP":
+				tmp = "0".concat(opcodes.get("POP").concat("0"));
+				if(content[i][1].matches("^-?\\d+$"))
+					tmp = tmp.concat(convertNumber(content[i][1], 10, 2, 5));
+				code[pc] = tmp;
+				pc++;
+				break;
+			
+			case "END":
+				break;
+			/* Label */
+			default:
+				if(!isMemory){
+					labelTable[lc] = new String[] {content[i][0].replace(":", ""), "0", String.valueOf(pc)};
+					lc++;
+				}
+				else{
+					String val = "";
+					if(content[i][1].equals("BIN"))
+						val = content[i][2];
+					else if(content[i][1].equals("DEC"))
+						val = convertNumber(content[i][2], 10, 2, 4);
+					else if(content[i][1].equals("HEX"))
+						val = convertNumber(content[i][2], 16, 2, 4);
+					val = val.substring(val.length()-4);
+					dataMemory.add(val, mc);
+					labelTable[lc] = new String[3];
+					labelTable[lc][0] = content[i][0].replace(":", "");
+					labelTable[lc][1] = val;
+					labelTable[lc][2] = String.valueOf(mc);
+					mc++;
+					lc++;
 				}
 			}
+			
 		}
+		Instruction inst;
+		for (int j = 0; j < code.length; j++) {
+			if(code[j]!=null){
+				inst = new Instruction(code[j]);
+				instructionMemory.add(inst, j);
+				Main.tableInstruction.getModel().setValueAt(code[j], j, 1);
+			}
+		}
+		
+	}
+	
+	/* Get value of label */
+	public String getLabelValue(String label, boolean adr){
+		String result = "";
+		for(String[] row:labelTable){
+			if(row[0].equals("label")){
+				if(!adr) result = convertNumber(row[1], 10, 2, 4);
+				else result = convertNumber(row[2], 10, 2, 5);
+			}
+		}
+		return result;
 	}
 	/* Take sub array */
 	public String[] slice(String[] array, int start, int end){
@@ -195,17 +470,25 @@ public class Computer {
 		return temp;
 	}
 	/* Convert decimal to 4 digit n based */
-	public String convertNumber(String num, int base){
-		int tmp = Integer.parseInt(num);
-		String result = "";
-		
-		result = Integer.toString(tmp, base);
-		
-		for (int i = result.length(); i < 4; i++) {
+	public String convertNumber(String num, int fromBase, int toBase, int completeDigit){
+		int intVal;
+		String result;
+		intVal = Integer.valueOf(num, fromBase);
+		result = Integer.toString(intVal, toBase);
+		for (int i = result.length(); i < completeDigit; i++) {
 			result = "0".concat(result);
 		}
-		
-		return result;
+		return result.toUpperCase();
 	}
-	
+	/* Refresh GUI */
+	public void draw(){
+		Main.tf_ar.setText(addressRegister.getData());
+		Main.tf_pc.setText(convertNumber(String.valueOf(programCounter.getData()), 10, 2, 4));
+		Main.tf_sp.setText(stackPointer.getData());
+		Main.tf_r0.setText(rgs[0].getData());
+		Main.tf_r1.setText(rgs[1].getData());
+		Main.tf_r2.setText(rgs[2].getData());
+		Main.tf_rin.setText(inpr.getData());
+		Main.tf_rout.setText(outr.getData());
+	}
 }

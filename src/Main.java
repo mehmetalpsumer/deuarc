@@ -30,6 +30,15 @@ import javax.swing.BoxLayout;
 import javax.swing.SpringLayout;
 import javax.swing.JTextField;
 import java.awt.Color;
+import javax.swing.JSlider;
+import javax.swing.UIManager;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.CompoundBorder;
+import java.awt.Panel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JTextArea;
+import java.awt.Font;
 
 public class Main extends JFrame {
 	Computer pc;
@@ -44,15 +53,18 @@ public class Main extends JFrame {
 	static public JTable tableData;
 	static public JTable tableInstruction;
 	static int tableInstructionCounter = 1;
-	private JTextField textField;
-	private JTextField textField_1;
-	private JTextField textField_2;
-	private JTextField textField_3;
-	private JTextField textField_4;
-	private JTextField textField_5;
-	private JTextField textField_6;
-	private JTextField textField_7;
-	private JTextField textField_8;
+	static public JTextField tf_r0;
+	static public JTextField tf_r1;
+	static public JTextField tf_r2;
+	static public JTextField tf_rin;
+	static public JTextField tf_rout;
+	static public JTextField tf_ir;
+	static public JTextField tf_ar;
+	static public JTextField tf_sp;
+	static public JTextField tf_pc;
+	static public JLabel lblCurrentMicroOperation;
+	static public JTable tableAssembly;
+	static public JTextArea curMicro;
 	/**
 	 * Launch the application.
 	 */
@@ -76,13 +88,13 @@ public class Main extends JFrame {
 	public Main() {
 		setTitle("DEUARC");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 738, 492);
+		setBounds(100, 100, 738, 720);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		
 		JButton btnChooseFile = new JButton("Choose file");
-		btnChooseFile.setBounds(311, 425, 113, 25);
+		btnChooseFile.setBounds(310, 453, 113, 25);
 		btnChooseFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				FileNameExtensionFilter filter = new FileNameExtensionFilter("Assembly code(*.asm)", "asm");
@@ -107,6 +119,18 @@ public class Main extends JFrame {
 			}
 		});
 		contentPane.setLayout(null);
+		
+		JLabel lblHex = new JLabel("HEX");
+		lblHex.setBounds(444, 415, 45, 15);
+		contentPane.add(lblHex);
+		
+		JLabel lblDec = new JLabel("DEC");
+		lblDec.setBounds(358, 415, 45, 15);
+		contentPane.add(lblDec);
+		
+		JLabel lblBin = new JLabel("BIN");
+		lblBin.setBounds(275, 415, 45, 15);
+		contentPane.add(lblBin);
 		contentPane.add(btnChooseFile);
 		
 		scrollPaneInstructionMemory = new JScrollPane();
@@ -119,18 +143,18 @@ public class Main extends JFrame {
 		scrollPaneInstructionMemory.setViewportView(tableInstruction);
 		tableInstruction.setModel(new DefaultTableModel(
 			new Object[][] {
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
-				{null, null},
+				{"0", "{EMPTY}"},
+				{"1", "{EMPTY}"},
+				{"2", "{EMPTY}"},
+				{"3", "{EMPTY}"},
+				{"4", "{EMPTY}"},
+				{"5", "{EMPTY}"},
+				{"6", "{EMPTY}"},
+				{"7", "{EMPTY}"},
+				{"8", "{EMPTY}"},
+				{"9", "{EMPTY}"},
+				{"10", "{EMPTY}"},
+				{"11", "{EMPTY}"},
 				{null, null},
 				{null, null},
 				{null, null},
@@ -305,6 +329,12 @@ public class Main extends JFrame {
 			public Class getColumnClass(int columnIndex) {
 				return columnTypes[columnIndex];
 			}
+			boolean[] columnEditables = new boolean[] {
+				false, false, false
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
+			}
 		});
 		tableLabel.getColumnModel().getColumn(0).setResizable(false);
 		tableLabel.getColumnModel().getColumn(1).setResizable(false);
@@ -364,80 +394,200 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.EAST, lblStackPointer, -87, SpringLayout.EAST, panel);
 		panel.add(lblStackPointer);
 		
-		textField = new JTextField();
-		textField.setBackground(Color.PINK);
-		textField.setEditable(false);
-		sl_panel.putConstraint(SpringLayout.NORTH, textField, 6, SpringLayout.SOUTH, lblRegister);
-		sl_panel.putConstraint(SpringLayout.WEST, textField, 10, SpringLayout.WEST, lblRegister);
-		panel.add(textField);
-		textField.setColumns(4);
+		tf_r0 = new JTextField();
+		tf_r0.setBackground(Color.PINK);
+		tf_r0.setEditable(false);
+		sl_panel.putConstraint(SpringLayout.NORTH, tf_r0, 6, SpringLayout.SOUTH, lblRegister);
+		sl_panel.putConstraint(SpringLayout.WEST, tf_r0, 10, SpringLayout.WEST, lblRegister);
+		panel.add(tf_r0);
+		tf_r0.setColumns(4);
 		
-		textField_1 = new JTextField();
-		textField_1.setBackground(Color.PINK);
-		textField_1.setEditable(false);
-		sl_panel.putConstraint(SpringLayout.SOUTH, textField_1, 0, SpringLayout.SOUTH, textField);
-		sl_panel.putConstraint(SpringLayout.EAST, textField_1, -10, SpringLayout.EAST, lblRegister_1);
-		textField_1.setColumns(4);
-		panel.add(textField_1);
+		tf_r1 = new JTextField();
+		tf_r1.setBackground(Color.PINK);
+		tf_r1.setEditable(false);
+		sl_panel.putConstraint(SpringLayout.SOUTH, tf_r1, 0, SpringLayout.SOUTH, tf_r0);
+		sl_panel.putConstraint(SpringLayout.EAST, tf_r1, -10, SpringLayout.EAST, lblRegister_1);
+		tf_r1.setColumns(4);
+		panel.add(tf_r1);
 		
-		textField_2 = new JTextField();
-		textField_2.setEditable(false);
-		textField_2.setBackground(Color.PINK);
-		sl_panel.putConstraint(SpringLayout.WEST, textField_2, 10, SpringLayout.WEST, lblRegister_2);
-		sl_panel.putConstraint(SpringLayout.SOUTH, textField_2, 0, SpringLayout.SOUTH, textField);
-		textField_2.setColumns(4);
-		panel.add(textField_2);
+		tf_r2 = new JTextField();
+		tf_r2.setEditable(false);
+		tf_r2.setBackground(Color.PINK);
+		sl_panel.putConstraint(SpringLayout.WEST, tf_r2, 10, SpringLayout.WEST, lblRegister_2);
+		sl_panel.putConstraint(SpringLayout.SOUTH, tf_r2, 0, SpringLayout.SOUTH, tf_r0);
+		tf_r2.setColumns(4);
+		panel.add(tf_r2);
 		
-		textField_3 = new JTextField();
-		textField_3.setBackground(Color.PINK);
-		textField_3.setEditable(false);
-		sl_panel.putConstraint(SpringLayout.NORTH, textField_3, 6, SpringLayout.SOUTH, lblRegisterIn);
-		sl_panel.putConstraint(SpringLayout.WEST, textField_3, 115, SpringLayout.EAST, textField_2);
-		textField_3.setColumns(4);
-		panel.add(textField_3);
+		tf_rin = new JTextField();
+		tf_rin.setBackground(Color.PINK);
+		tf_rin.setEditable(false);
+		sl_panel.putConstraint(SpringLayout.NORTH, tf_rin, 6, SpringLayout.SOUTH, lblRegisterIn);
+		sl_panel.putConstraint(SpringLayout.WEST, tf_rin, 115, SpringLayout.EAST, tf_r2);
+		tf_rin.setColumns(4);
+		panel.add(tf_rin);
 		
-		textField_4 = new JTextField();
-		textField_4.setEditable(false);
-		textField_4.setBackground(Color.PINK);
-		sl_panel.putConstraint(SpringLayout.SOUTH, textField_4, 0, SpringLayout.SOUTH, textField);
-		sl_panel.putConstraint(SpringLayout.EAST, textField_4, -28, SpringLayout.EAST, panel);
-		textField_4.setColumns(4);
-		panel.add(textField_4);
+		tf_rout = new JTextField();
+		tf_rout.setEditable(false);
+		tf_rout.setBackground(Color.PINK);
+		sl_panel.putConstraint(SpringLayout.SOUTH, tf_rout, 0, SpringLayout.SOUTH, tf_r0);
+		sl_panel.putConstraint(SpringLayout.EAST, tf_rout, -28, SpringLayout.EAST, panel);
+		tf_rout.setColumns(4);
+		panel.add(tf_rout);
 		
-		textField_5 = new JTextField();
-		sl_panel.putConstraint(SpringLayout.EAST, lblProgramCounter, 0, SpringLayout.EAST, textField_5);
-		textField_5.setBackground(Color.LIGHT_GRAY);
-		sl_panel.putConstraint(SpringLayout.NORTH, textField_5, 6, SpringLayout.SOUTH, lblInstructionRegister);
-		sl_panel.putConstraint(SpringLayout.WEST, textField_5, 10, SpringLayout.WEST, lblInstructionRegister);
-		textField_5.setEditable(false);
-		panel.add(textField_5);
-		textField_5.setColumns(11);
+		tf_ir = new JTextField();
+		sl_panel.putConstraint(SpringLayout.EAST, lblProgramCounter, 0, SpringLayout.EAST, tf_ir);
+		tf_ir.setBackground(Color.LIGHT_GRAY);
+		sl_panel.putConstraint(SpringLayout.NORTH, tf_ir, 6, SpringLayout.SOUTH, lblInstructionRegister);
+		sl_panel.putConstraint(SpringLayout.WEST, tf_ir, 10, SpringLayout.WEST, lblInstructionRegister);
+		tf_ir.setEditable(false);
+		panel.add(tf_ir);
+		tf_ir.setColumns(11);
 		
-		textField_6 = new JTextField();
-		sl_panel.putConstraint(SpringLayout.NORTH, textField_6, 166, SpringLayout.NORTH, panel);
-		sl_panel.putConstraint(SpringLayout.SOUTH, lblAddressRegister, -6, SpringLayout.NORTH, textField_6);
-		sl_panel.putConstraint(SpringLayout.WEST, textField_6, 100, SpringLayout.WEST, panel);
-		textField_6.setBackground(Color.PINK);
-		textField_6.setEditable(false);
-		panel.add(textField_6);
-		textField_6.setColumns(4);
+		tf_ar = new JTextField();
+		sl_panel.putConstraint(SpringLayout.NORTH, tf_ar, 166, SpringLayout.NORTH, panel);
+		sl_panel.putConstraint(SpringLayout.SOUTH, lblAddressRegister, -6, SpringLayout.NORTH, tf_ar);
+		sl_panel.putConstraint(SpringLayout.WEST, tf_ar, 100, SpringLayout.WEST, panel);
+		tf_ar.setBackground(Color.PINK);
+		tf_ar.setEditable(false);
+		panel.add(tf_ar);
+		tf_ar.setColumns(4);
 		
-		textField_7 = new JTextField();
-		sl_panel.putConstraint(SpringLayout.NORTH, textField_7, 166, SpringLayout.NORTH, panel);
-		sl_panel.putConstraint(SpringLayout.SOUTH, lblStackPointer, -6, SpringLayout.NORTH, textField_7);
-		sl_panel.putConstraint(SpringLayout.EAST, textField_7, -106, SpringLayout.EAST, panel);
-		textField_7.setEditable(false);
-		textField_7.setColumns(4);
-		textField_7.setBackground(Color.PINK);
-		panel.add(textField_7);
+		tf_sp = new JTextField();
+		sl_panel.putConstraint(SpringLayout.NORTH, tf_sp, 166, SpringLayout.NORTH, panel);
+		sl_panel.putConstraint(SpringLayout.SOUTH, lblStackPointer, -6, SpringLayout.NORTH, tf_sp);
+		sl_panel.putConstraint(SpringLayout.EAST, tf_sp, -106, SpringLayout.EAST, panel);
+		tf_sp.setEditable(false);
+		tf_sp.setColumns(4);
+		tf_sp.setBackground(Color.PINK);
+		panel.add(tf_sp);
 		
-		textField_8 = new JTextField();
-		sl_panel.putConstraint(SpringLayout.NORTH, textField_8, 0, SpringLayout.NORTH, textField_6);
-		sl_panel.putConstraint(SpringLayout.EAST, textField_8, 0, SpringLayout.EAST, lblRegister_2);
-		textField_8.setEditable(false);
-		textField_8.setColumns(5);
-		textField_8.setBackground(Color.PINK);
-		panel.add(textField_8);
+		tf_pc = new JTextField();
+		sl_panel.putConstraint(SpringLayout.NORTH, tf_pc, 0, SpringLayout.NORTH, tf_ar);
+		sl_panel.putConstraint(SpringLayout.EAST, tf_pc, 0, SpringLayout.EAST, lblRegister_2);
+		tf_pc.setEditable(false);
+		tf_pc.setColumns(5);
+		tf_pc.setBackground(Color.PINK);
+		panel.add(tf_pc);
+		
+		JSlider slider = new JSlider();
+		sl_panel.putConstraint(SpringLayout.EAST, slider, -251, SpringLayout.EAST, panel);
+		panel.add(slider);
+		slider.setBackground(UIManager.getColor("PasswordField.inactiveBackground"));
+		slider.setPaintLabels(true);
+		slider.setPaintTicks(true);
+		slider.setValue(0);
+		slider.setMaximum(2);
+		sl_panel.putConstraint(SpringLayout.NORTH, slider, 6, SpringLayout.SOUTH, tf_pc);
+		
+		Panel panel_1 = new Panel();
+		panel_1.setBounds(12, 495, 714, 196);
+		contentPane.add(panel_1);
+		panel_1.setLayout(null);
+		
+		JScrollPane scrollPaneAssembly = new JScrollPane();
+		scrollPaneAssembly.setBounds(12, 12, 255, 172);
+		panel_1.add(scrollPaneAssembly);
+		
+		tableAssembly = new JTable();
+		scrollPaneAssembly.setViewportView(tableAssembly);
+		tableAssembly.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tableAssembly.setRowSelectionAllowed(false);
+		tableAssembly.setModel(new DefaultTableModel(
+			new Object[][] {
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+				{null},
+			},
+			new String[] {
+				"Assembly"
+			}
+		) {
+			Class[] columnTypes = new Class[] {
+				String.class
+			};
+			public Class getColumnClass(int columnIndex) {
+				return columnTypes[columnIndex];
+			}
+			boolean[] columnEditables = new boolean[] {
+				false
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
+			}
+		});
+		
+		JButton btnNextLine = new JButton("Previous");
+		btnNextLine.setBounds(300, 67, 113, 25);
+		panel_1.add(btnNextLine);
+		
+		JButton btnNextMicro = new JButton("Next");
+		btnNextMicro.setBounds(300, 39, 113, 25);
+		panel_1.add(btnNextMicro);
+		
+		JButton btnPrevious = new JButton("Previous");
+		btnPrevious.setBounds(300, 150, 113, 25);
+		panel_1.add(btnPrevious);
+		
+		JButton btnNext = new JButton("Next");
+		btnNext.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				pc.iterate();
+			}
+		});
+		btnNext.setBounds(300, 122, 113, 25);
+		panel_1.add(btnNext);
+		
+		JLabel lblLine = new JLabel("Line");
+		lblLine.setBounds(342, 24, 39, 15);
+		panel_1.add(lblLine);
+		
+		JLabel lblMicroOperation = new JLabel("Micro Operation");
+		lblMicroOperation.setBounds(302, 105, 126, 15);
+		panel_1.add(lblMicroOperation);
+		
+	    lblCurrentMicroOperation = new JLabel("Current Micro Operation");
+		lblCurrentMicroOperation.setBounds(480, 72, 196, 15);
+		panel_1.add(lblCurrentMicroOperation);
+		
+		curMicro = new JTextArea();
+		curMicro.setFont(new Font("Cantarell", Font.BOLD, 12));
+		curMicro.setToolTipText("");
+		curMicro.setBackground(UIManager.getColor("Button.background"));
+		curMicro.setBounds(490, 105, 212, 56);
+		panel_1.add(curMicro);
+		tableAssembly.getColumnModel().getColumn(0).setResizable(false);
+		tableAssembly.getColumnModel().getColumn(0).setPreferredWidth(140);
+		tableAssembly.getColumnModel().getColumn(0).setMaxWidth(500);
 		
 	}
 }
