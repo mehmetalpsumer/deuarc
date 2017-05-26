@@ -546,22 +546,42 @@ public class Main extends JFrame {
 		});
 		
 		JButton btnNextLine = new JButton("Previous");
+		btnNextLine.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pc.getLL().prevLine().draw();
+			}
+		});
 		btnNextLine.setBounds(300, 67, 113, 25);
 		panel_1.add(btnNextLine);
 		
 		JButton btnNextMicro = new JButton("Next");
+		btnNextMicro.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pc.getLL().nextLine().draw();
+			}
+		});
 		btnNextMicro.setBounds(300, 39, 113, 25);
 		panel_1.add(btnNextMicro);
 		
 		JButton btnPrevious = new JButton("Previous");
+		btnPrevious.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pc.getLL().prevMicro().draw();
+			}
+		});
 		btnPrevious.setBounds(300, 150, 113, 25);
 		panel_1.add(btnPrevious);
 		
 		JButton btnNext = new JButton("Next");
+		btnNext.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pc.getLL().nextMicro().draw();
+			}
+		});
 		btnNext.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				pc.iterate();
+				
 			}
 		});
 		btnNext.setBounds(300, 122, 113, 25);

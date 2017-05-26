@@ -32,4 +32,16 @@ public class Instruction {
 	public String getString(){
 		return (""+q+opcode+d+s1+s2);
 	}
+	public int getQdec(){
+		return Integer.parseInt(Computer.convertNumber(q, 2, 10, 2));
+	}
+	public int getDdec(){
+		return Integer.parseInt(Computer.convertNumber(d, 2, 10, 2));
+	}
+	public int getS1dec(){
+		return Integer.parseInt(Computer.convertNumber(s1, 2, 10, 2));
+	}
+	public int getS2dec(){
+		return Integer.parseInt(Computer.convertNumber(s2, 2, 10, 2));
+	}
 }

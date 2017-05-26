@@ -8,5 +8,8 @@ public class StackPointer extends Register{
 		data = "0000";
 		decrease = false;
 	}
+	
+	/* Functions */
+	
 
 }

@@ -1,18 +1,25 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Computer {
-	/* Attributes */
+	/* ATTRIBUTES */
+	/* Memories */
 	private InstructionMemory instructionMemory;
 	private DataMemory dataMemory;
+	/* Registers */
 	private Register inpr, outr, addressRegister;
 	private InstructionRegister instructionRegister;
 	private Register rgs[];
 	private ProgramCounter programCounter;
 	private StackPointer stackPointer;
+	
+	/* Others */
 	private SequenceCounter sc;
 	private String[][] labelTable;
-	
-	/* Constructor */
+	private LinkedList ll;
+	public static int base = 2;
+	public static int current = 0;
+	/* CONSTRUCTOR */
 	public Computer(String assembly){
 		/* GENERATE */
 		/* label table */
@@ -31,60 +38,72 @@ public class Computer {
 			rgs[i] = new Register();
 		inpr= new Register();
 		outr = new Register();
+		
+		/* states */
+		//states = new State[32][5];
+		ll = new LinkedList();
+	
 		/* RUN */
 		convert(assembly.replaceAll("\\r", ""));
 		updateLabels();
-		
+
+		while(iterate()){
+			System.out.println("a");
+		}
 	}
 	
 	
-	/* Functions */
+	/* METHODS */
 	/* run the computer after instructions are retrieved */
-	public void iterate(){
-		int op=-1;
-		String q, s2, s1, d;
-		
+	String op;
+	String q, s2, s1, d;
+	public boolean iterate(){
+		int scTemp = sc.getT();
+		int pcTemp = programCounter.getData();
+		// end of code
+		if(sc.getT()==0 && instructionMemory.getInstruction(programCounter.getData())==null){
+			return false;
+		}
 		/* Fetch */
 		if(sc.getT() == 0){
 			instructionRegister.setInstruction(instructionMemory.getInstruction(programCounter.data));
-			Main.tf_ir.setText(instructionRegister.getInstruction().getString());
-			Main.tf_ir.repaint();
-			Main.curMicro.setText("T0: IR <- IM["+programCounter.getData()+"]");
-			Main.curMicro.repaint();
 			sc.increase();
+			
+			if(ll.getTail()!=null){
+				ll.getTail().setEndOfLine(true);
+			}
 		}
 		else if(sc.getT() == 1){
 			programCounter.increase();
-			Main.tf_pc.setText(convertNumber(String.valueOf(programCounter.getData()), 10, 2, 4));
-			Main.curMicro.setText("T1: PC <- "+(programCounter.data+1));
-			Main.curMicro.repaint();
 			sc.increase();
 		}
 		
 		/* Decode */
 		else if(sc.getT() == 2){
 			q = instructionRegister.getInstruction().getString().charAt(0)+"";
-			op = Integer.parseInt(instructionRegister.getInstruction().getString().substring(1, 5));
+			op = instructionRegister.getInstruction().getString().substring(1, 5);
 			d = instructionRegister.getInstruction().getString().substring(5, 7);
 			s1 = instructionRegister.getInstruction().getString().substring(7,9);
 			s2 = instructionRegister.getInstruction().getString().substring(9);
-			Main.curMicro.setText("T2: D0..D15 <- "+op+", Q <- "+q+",\n S2 <- "+s2+", S1 <- "+s1+", D <- "+d);
-			Main.curMicro.repaint();
 			sc.clear();
 		}
 		
 		/* Execute */
 		else if(sc.getT() == 3){
-			switch(op){
-			case 1:
-				//rgs[Integer.parseInt(d)].setData();
+			
+			/*switch(op){
+			
+			case "0000":
+				rgs[Integer.parseInt(convertNumber(d, 2, 10, 2))].setData(convertNumber(String.valueOf(), 10, 2, 4));
 				break;
-			}
+			}*/
 		}
-		
 	
+		ll.add(new State( instructionMemory, dataMemory, inpr, outr, addressRegister, instructionRegister, rgs, programCounter, stackPointer));
+		return true;
 		
-	}	/* updates label table on GUI */
+	}	
+	/* updates label table on GUI */
 	public void updateLabels(){
 		int i=0;
 		for(String[] label:labelTable){
@@ -99,13 +118,12 @@ public class Computer {
 		
 	}
 	
-	/* CONVERTER */
-	/* Converter attr. */
-	String content[][];
-	HashMap<String, String> opcodes, registers;
-	/* Converter funcs */
+	/* Converter */
+	/* Converter attributes */
+	private String content[][];
+	private HashMap<String, String> opcodes, registers;
+	/* Converter functions */
 	public void convert(String text){	
-		draw();
 		
 		String tempa[] = text.split("\n");
 		String contentJagged[][] = new String[tempa.length][];
@@ -201,6 +219,7 @@ public class Computer {
 					isMemory = false;
 					pc = Integer.parseInt(content[i][2]); // set program counter
 					programCounter.setData(pc);
+					Main.tf_pc.setText(convertNumber(String.valueOf(pc), 10, 2, 4));
 				}
 				/* Data Memory Segment */
 				else if(content[i][1].equals("D")){
@@ -470,7 +489,7 @@ public class Computer {
 		return temp;
 	}
 	/* Convert decimal to 4 digit n based */
-	public String convertNumber(String num, int fromBase, int toBase, int completeDigit){
+	public static String convertNumber(String num, int fromBase, int toBase, int completeDigit){
 		int intVal;
 		String result;
 		intVal = Integer.valueOf(num, fromBase);
@@ -480,15 +499,47 @@ public class Computer {
 		}
 		return result.toUpperCase();
 	}
-	/* Refresh GUI */
-	public void draw(){
-		Main.tf_ar.setText(addressRegister.getData());
-		Main.tf_pc.setText(convertNumber(String.valueOf(programCounter.getData()), 10, 2, 4));
-		Main.tf_sp.setText(stackPointer.getData());
-		Main.tf_r0.setText(rgs[0].getData());
-		Main.tf_r1.setText(rgs[1].getData());
-		Main.tf_r2.setText(rgs[2].getData());
-		Main.tf_rin.setText(inpr.getData());
-		Main.tf_rout.setText(outr.getData());
+
+	
+	/* Get - set */
+	public InstructionMemory getInstructionMemory() {
+		return instructionMemory;
 	}
+	public DataMemory getDataMemory() {
+		return dataMemory;
+	}
+	public Register getInpr() {
+		return inpr;
+	}
+	public Register getOutr() {
+		return outr;
+	}
+	public Register getAddressRegister() {
+		return addressRegister;
+	}
+	public InstructionRegister getInstructionRegister() {
+		return instructionRegister;
+	}
+	public Register[] getRgs() {
+		return rgs;
+	}
+	public ProgramCounter getProgramCounter() {
+		return programCounter;
+	}
+	public StackPointer getStackPointer() {
+		return stackPointer;
+	}
+	public SequenceCounter getSc() {
+		return sc;
+	}
+	public String[][] getLabelTable() {
+		return labelTable;
+	}
+	public LinkedList getLL(){
+		return ll;
+	}
+
+
+
+	
 }
