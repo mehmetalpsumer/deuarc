@@ -39,6 +39,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JTextArea;
 import java.awt.Font;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 
 public class Main extends JFrame {
 	Computer pc;
@@ -56,7 +58,7 @@ public class Main extends JFrame {
 	static public JTextField tf_r0;
 	static public JTextField tf_r1;
 	static public JTextField tf_r2;
-	static public JTextField tf_rin;
+	static public JTextArea tf_rin;
 	static public JTextField tf_rout;
 	static public JTextField tf_ir;
 	static public JTextField tf_ar;
@@ -94,7 +96,7 @@ public class Main extends JFrame {
 		setContentPane(contentPane);
 		
 		JButton btnChooseFile = new JButton("Choose file");
-		btnChooseFile.setBounds(310, 453, 113, 25);
+		btnChooseFile.setBounds(248, 442, 113, 25);
 		btnChooseFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				FileNameExtensionFilter filter = new FileNameExtensionFilter("Assembly code(*.asm)", "asm");
@@ -135,7 +137,7 @@ public class Main extends JFrame {
 		
 		scrollPaneInstructionMemory = new JScrollPane();
 		scrollPaneInstructionMemory.setViewportBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
-		scrollPaneInstructionMemory.setBounds(27, 27, 145, 160);
+		scrollPaneInstructionMemory.setBounds(20, 27, 152, 160);
 		contentPane.add(scrollPaneInstructionMemory);
 		
 		tableInstruction = new JTable();
@@ -143,18 +145,18 @@ public class Main extends JFrame {
 		scrollPaneInstructionMemory.setViewportView(tableInstruction);
 		tableInstruction.setModel(new DefaultTableModel(
 			new Object[][] {
-				{"0", "{EMPTY}"},
-				{"1", "{EMPTY}"},
-				{"2", "{EMPTY}"},
-				{"3", "{EMPTY}"},
-				{"4", "{EMPTY}"},
-				{"5", "{EMPTY}"},
-				{"6", "{EMPTY}"},
-				{"7", "{EMPTY}"},
-				{"8", "{EMPTY}"},
-				{"9", "{EMPTY}"},
-				{"10", "{EMPTY}"},
-				{"11", "{EMPTY}"},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
 				{null, null},
 				{null, null},
 				{null, null},
@@ -177,7 +179,7 @@ public class Main extends JFrame {
 				{null, null},
 			},
 			new String[] {
-				"#", "Instruction"
+				"Adr", "Instruction"
 			}
 		) {
 			Class[] columnTypes = new Class[] {
@@ -185,12 +187,6 @@ public class Main extends JFrame {
 			};
 			public Class getColumnClass(int columnIndex) {
 				return columnTypes[columnIndex];
-			}
-			boolean[] columnEditables = new boolean[] {
-				false, false
-			};
-			public boolean isCellEditable(int row, int column) {
-				return columnEditables[column];
 			}
 		});
 		tableInstruction.getColumnModel().getColumn(0).setResizable(false);
@@ -213,22 +209,22 @@ public class Main extends JFrame {
 		tableData = new JTable();
 		tableData.setModel(new DefaultTableModel(
 			new Object[][] {
-				{"0000", null},
-				{"0001", null},
-				{"0010", null},
-				{"0011", null},
-				{"0100", null},
-				{"0101", null},
-				{"0110", null},
-				{"0111", null},
-				{"1000", null},
-				{"1001", null},
-				{"1010", null},
-				{"1011", null},
-				{"1100", null},
-				{"1101", null},
-				{"1110", null},
-				{"1111", null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
+				{null, null},
 			},
 			new String[] {
 				"Address", "Data"
@@ -298,7 +294,7 @@ public class Main extends JFrame {
 		tableStack.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		scrollPaneStackMemory.setViewportView(tableStack);
 		
-		JLabel labelStack = new JLabel("Stack Pointer");
+		JLabel labelStack = new JLabel("Stack Memory");
 		labelStack.setBounds(394, 5, 142, 15);
 		contentPane.add(labelStack);
 		
@@ -337,8 +333,11 @@ public class Main extends JFrame {
 			}
 		});
 		tableLabel.getColumnModel().getColumn(0).setResizable(false);
+		tableLabel.getColumnModel().getColumn(0).setPreferredWidth(65);
 		tableLabel.getColumnModel().getColumn(1).setResizable(false);
+		tableLabel.getColumnModel().getColumn(1).setPreferredWidth(80);
 		tableLabel.getColumnModel().getColumn(2).setResizable(false);
+		tableLabel.getColumnModel().getColumn(2).setPreferredWidth(80);
 		tableLabel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		scrollPaneLabelTable.setViewportView(tableLabel);
 		
@@ -418,12 +417,13 @@ public class Main extends JFrame {
 		tf_r2.setColumns(4);
 		panel.add(tf_r2);
 		
-		tf_rin = new JTextField();
+		tf_rin = new JTextArea();
 		tf_rin.setBackground(Color.PINK);
-		tf_rin.setEditable(false);
+		tf_rin.setEditable(true);
 		sl_panel.putConstraint(SpringLayout.NORTH, tf_rin, 6, SpringLayout.SOUTH, lblRegisterIn);
 		sl_panel.putConstraint(SpringLayout.WEST, tf_rin, 115, SpringLayout.EAST, tf_r2);
 		tf_rin.setColumns(4);
+		tf_rin.setRows(1);
 		panel.add(tf_rin);
 		
 		tf_rout = new JTextField();
@@ -470,6 +470,21 @@ public class Main extends JFrame {
 		panel.add(tf_pc);
 		
 		JSlider slider = new JSlider();
+		slider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				if(slider.getValue()==0){
+					Computer.base = 2;
+				}
+				else if(slider.getValue() == 1){
+					Computer.base = 10;
+				}
+				else{
+					Computer.base = 16;
+				}
+				if(pc!=null && pc.getLL()!=null && pc.getLL().getHead()!=null)
+					pc.getLL().current().draw();
+			}
+		});
 		sl_panel.putConstraint(SpringLayout.EAST, slider, -251, SpringLayout.EAST, panel);
 		panel.add(slider);
 		slider.setBackground(UIManager.getColor("PasswordField.inactiveBackground"));
@@ -605,6 +620,14 @@ public class Main extends JFrame {
 		curMicro.setBackground(UIManager.getColor("Button.background"));
 		curMicro.setBounds(490, 105, 212, 56);
 		panel_1.add(curMicro);
+		
+		JButton btnNewButton = new JButton("Export MIF");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		btnNewButton.setBounds(385, 442, 117, 25);
+		contentPane.add(btnNewButton);
 		tableAssembly.getColumnModel().getColumn(0).setResizable(false);
 		tableAssembly.getColumnModel().getColumn(0).setPreferredWidth(140);
 		tableAssembly.getColumnModel().getColumn(0).setMaxWidth(500);

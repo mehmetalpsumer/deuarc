@@ -45,11 +45,12 @@ public class Computer {
 	
 		/* RUN */
 		convert(assembly.replaceAll("\\r", ""));
-		updateLabels();
+	
 
 		while(iterate()){
-			System.out.println("a");
+			continue;
 		}
+		ll.getHead().getValue().draw();
 	}
 	
 	
@@ -98,26 +99,18 @@ public class Computer {
 				break;
 			}*/
 		}
+		else if(sc.getT() == 4){
+			
+		}
+		else if(sc.getT() == 5){
+			
+		}
 	
-		ll.add(new State( instructionMemory, dataMemory, inpr, outr, addressRegister, instructionRegister, rgs, programCounter, stackPointer));
+		ll.add(new State( instructionMemory, dataMemory, inpr, outr, addressRegister, instructionRegister, rgs, programCounter, stackPointer, labelTable));
 		return true;
 		
 	}	
-	/* updates label table on GUI */
-	public void updateLabels(){
-		int i=0;
-		for(String[] label:labelTable){
-			if(label[0]!=null){
-				Main.tableLabel.getModel().setValueAt(label[0], i, 0);
-				Main.tableLabel.getModel().setValueAt(label[1], i, 1);
-				Main.tableLabel.getModel().setValueAt(convertNumber(label[2], 10, 2, 4), i, 2);
-				i++;
-			}
-			Main.tableLabel.repaint();
-		}
-		
-	}
-	
+
 	/* Converter */
 	/* Converter attributes */
 	private String content[][];

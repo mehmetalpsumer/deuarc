@@ -3,7 +3,7 @@ public class DataMemory extends Memory {
 
 	/* Attributes */
 	private boolean write;
-	
+
 	/* Constructor */
 	public DataMemory(int row, int length) {
 		super(row, length);
@@ -35,5 +35,8 @@ public class DataMemory extends Memory {
 	public String read(int index){
 		if(read && index<data.length) return data[index];
 		else return null;
+	}
+	public String[] getData(){
+		return data;
 	}
 }

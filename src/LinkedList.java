@@ -96,7 +96,16 @@ public class LinkedList {
 			
 		}
 	}
-	
+	public State current(){
+		LinkedListNode temp = head;
+		for (int i = 0; i < Computer.current; i++) {
+			if(temp == null){
+				return temp.getValue();
+			}
+			temp = temp.getNext();
+		}
+		return temp.getValue();
+	}
 	public void add(State state){
 		LinkedListNode node = new LinkedListNode(state);
 		
@@ -112,6 +121,9 @@ public class LinkedList {
 	}
 	public LinkedListNode getTail(){
 		return this.tail;
+	}
+	public LinkedListNode getHead(){
+		return this.head;
 	}
 
 	
