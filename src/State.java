@@ -5,14 +5,16 @@ public class State {
 	/* Registers */
 	private String inpr, outr, addressRegister;
 	private String instructionRegister;
-	private String rgs[], dm[];
+	private String[] rgs, dm, sm;
 	private String programCounter;
 	private String stackPointer;
 	private String labelTable[][];
+	private int overflow;
+	private String curMicro;
 	/* Constructor */
 	public State(InstructionMemory instructionMemory, DataMemory dataMemory, Register inpr, Register outr,
 			Register addressRegister, InstructionRegister instructionRegister, Register[] rgs,
-			ProgramCounter programCounter, StackPointer stackPointer, String[][] labelTable) {
+			ProgramCounter programCounter, StackPointer stackPointer, String[][] labelTable, int v, Memory stackMemory, String curmir) {
 		this.rgs = new String[3];
 		this.inpr = inpr.getData();
 		this.outr = outr.getData();
@@ -24,11 +26,29 @@ public class State {
 		this.rgs[1] = rgs[1].getData();
 		this.rgs[2] = rgs[2].getData();
 		this.labelTable = labelTable;
-		this.dm = dataMemory.getData();
+		this.overflow = v;
+		
+		// stack memory
+		this.sm = new String[stackMemory.getData().length];
+		for (int i = 0; i < stackMemory.getData().length; i++) {
+			sm[i] = stackMemory.get(i);
+		}
+		
+		// data memory
+		this.dm = new String[dataMemory.getData().length];
+		for (int i = 0; i < dataMemory.getData().length; i++) {
+			dm[i] = dataMemory.get(i);
+		}
+		
+		this.curMicro = curmir;
 	}
 
 	/* Functions */
 	public void draw(){
+		Main.curMicro.setText(curMicro);
+		Main.curMicro.repaint();
+		Main.tf_v.setText(String.valueOf(overflow));
+		Main.tf_v.repaint();
 		// Program counter
 		Main.tf_pc.setText(Computer.convertNumber(programCounter, 10, Computer.base, Computer.base==2?5:2));
 		Main.tf_pc.repaint();
@@ -66,6 +86,7 @@ public class State {
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 3; j++) {
 					if(labelTable[i][j]!=null){
+						
 						switch(j){
 						case 0:
 							Main.tableLabel.getModel().setValueAt(labelTable[i][j], i, j);
@@ -81,11 +102,20 @@ public class State {
 			}
 		}
 		for (int i = 0; i < dm.length; i++) {
+
 			Main.tableData.getModel().setValueAt(Computer.convertNumber(String.valueOf(i), 10, Computer.base, Computer.base==2?4:2),  i, 0);
 			if(dm[i] == null)
 				Main.tableData.getModel().setValueAt("{EMPTY}",  i, 1);
 			else
 				Main.tableData.getModel().setValueAt(Computer.convertNumber(dm[i], 2,Computer.base, Computer.base==2?4:2),  i, 1);
+			Main.tableData.repaint();
+		}
+		for (int i = 0; i < sm.length; i++) {
+			if(sm[i] == null)
+				Main.tableStack.getModel().setValueAt("{EMPTY}", i, 0);
+			else
+				Main.tableStack.getModel().setValueAt(Computer.convertNumber(sm[i], 2,Computer.base, Computer.base==2?4:2),  i, 0);
+			Main.tableStack.repaint();
 		}
 	}
 	

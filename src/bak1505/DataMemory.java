@@ -1,9 +1,10 @@
+package bak1505;
 
 public class DataMemory extends Memory {
 
 	/* Attributes */
 	private boolean write;
-
+	
 	/* Constructor */
 	public DataMemory(int row, int length) {
 		super(row, length);
@@ -19,6 +20,7 @@ public class DataMemory extends Memory {
 	public void add(String val, int index){
 		if(data[index] == null){
 			data[index] = val;
+			Main.tableData.getModel().setValueAt(val, index, 1);
 			index++;
 		}
 		else
@@ -34,8 +36,5 @@ public class DataMemory extends Memory {
 	public String read(int index){
 		if(read && index<data.length) return data[index];
 		else return null;
-	}
-	public String[] getData(){
-		return data;
 	}
 }

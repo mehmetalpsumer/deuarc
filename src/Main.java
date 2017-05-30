@@ -10,6 +10,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Scanner;
 import org.apache.commons.io.FileUtils;
 import javax.swing.JToolBar;
@@ -40,6 +43,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.JTextArea;
 import java.awt.Font;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ChangeEvent;
 
 public class Main extends JFrame {
@@ -67,6 +72,7 @@ public class Main extends JFrame {
 	static public JLabel lblCurrentMicroOperation;
 	static public JTable tableAssembly;
 	static public JTextArea curMicro;
+	static public JTextField tf_v;
 	/**
 	 * Launch the application.
 	 */
@@ -187,6 +193,12 @@ public class Main extends JFrame {
 			};
 			public Class getColumnClass(int columnIndex) {
 				return columnTypes[columnIndex];
+			}
+			boolean[] columnEditables = new boolean[] {
+				false, false
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
 			}
 		});
 		tableInstruction.getColumnModel().getColumn(0).setResizable(false);
@@ -398,8 +410,9 @@ public class Main extends JFrame {
 		tf_r0.setEditable(false);
 		sl_panel.putConstraint(SpringLayout.NORTH, tf_r0, 6, SpringLayout.SOUTH, lblRegister);
 		sl_panel.putConstraint(SpringLayout.WEST, tf_r0, 10, SpringLayout.WEST, lblRegister);
-		panel.add(tf_r0);
+		tf_r0.setHorizontalAlignment(JTextField.CENTER);
 		tf_r0.setColumns(4);
+		panel.add(tf_r0);
 		
 		tf_r1 = new JTextField();
 		tf_r1.setBackground(Color.PINK);
@@ -407,6 +420,7 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.SOUTH, tf_r1, 0, SpringLayout.SOUTH, tf_r0);
 		sl_panel.putConstraint(SpringLayout.EAST, tf_r1, -10, SpringLayout.EAST, lblRegister_1);
 		tf_r1.setColumns(4);
+		tf_r1.setHorizontalAlignment(JTextField.CENTER);
 		panel.add(tf_r1);
 		
 		tf_r2 = new JTextField();
@@ -415,6 +429,7 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.WEST, tf_r2, 10, SpringLayout.WEST, lblRegister_2);
 		sl_panel.putConstraint(SpringLayout.SOUTH, tf_r2, 0, SpringLayout.SOUTH, tf_r0);
 		tf_r2.setColumns(4);
+		tf_r2.setHorizontalAlignment(JTextField.CENTER);
 		panel.add(tf_r2);
 		
 		tf_rin = new JTextArea();
@@ -424,6 +439,28 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.WEST, tf_rin, 115, SpringLayout.EAST, tf_r2);
 		tf_rin.setColumns(4);
 		tf_rin.setRows(1);
+		tf_rin.setAlignmentX(CENTER_ALIGNMENT);
+		tf_rin.getDocument().addDocumentListener(new DocumentListener() {
+			
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				if(pc!=null) pc.getInpr().setData(tf_rin.getText());
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				if(pc!=null) pc.getInpr().setData(tf_rin.getText());
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				if(pc!=null) pc.getInpr().setData(tf_rin.getText());
+			}
+		});
 		panel.add(tf_rin);
 		
 		tf_rout = new JTextField();
@@ -432,6 +469,7 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.SOUTH, tf_rout, 0, SpringLayout.SOUTH, tf_r0);
 		sl_panel.putConstraint(SpringLayout.EAST, tf_rout, -28, SpringLayout.EAST, panel);
 		tf_rout.setColumns(4);
+		tf_rout.setHorizontalAlignment(JTextField.CENTER);
 		panel.add(tf_rout);
 		
 		tf_ir = new JTextField();
@@ -440,8 +478,9 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.NORTH, tf_ir, 6, SpringLayout.SOUTH, lblInstructionRegister);
 		sl_panel.putConstraint(SpringLayout.WEST, tf_ir, 10, SpringLayout.WEST, lblInstructionRegister);
 		tf_ir.setEditable(false);
-		panel.add(tf_ir);
+		tf_ir.setHorizontalAlignment(JTextField.CENTER);
 		tf_ir.setColumns(11);
+		panel.add(tf_ir);
 		
 		tf_ar = new JTextField();
 		sl_panel.putConstraint(SpringLayout.NORTH, tf_ar, 166, SpringLayout.NORTH, panel);
@@ -449,8 +488,9 @@ public class Main extends JFrame {
 		sl_panel.putConstraint(SpringLayout.WEST, tf_ar, 100, SpringLayout.WEST, panel);
 		tf_ar.setBackground(Color.PINK);
 		tf_ar.setEditable(false);
-		panel.add(tf_ar);
+		tf_ar.setHorizontalAlignment(JTextField.CENTER);
 		tf_ar.setColumns(4);
+		panel.add(tf_ar);
 		
 		tf_sp = new JTextField();
 		sl_panel.putConstraint(SpringLayout.NORTH, tf_sp, 166, SpringLayout.NORTH, panel);
@@ -459,6 +499,7 @@ public class Main extends JFrame {
 		tf_sp.setEditable(false);
 		tf_sp.setColumns(4);
 		tf_sp.setBackground(Color.PINK);
+		tf_sp.setHorizontalAlignment(JTextField.CENTER);
 		panel.add(tf_sp);
 		
 		tf_pc = new JTextField();
@@ -467,6 +508,7 @@ public class Main extends JFrame {
 		tf_pc.setEditable(false);
 		tf_pc.setColumns(5);
 		tf_pc.setBackground(Color.PINK);
+		tf_pc.setHorizontalAlignment(JTextField.CENTER);
 		panel.add(tf_pc);
 		
 		JSlider slider = new JSlider();
@@ -624,10 +666,58 @@ public class Main extends JFrame {
 		JButton btnNewButton = new JButton("Export MIF");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if(pc!=null){
+					String prefix = "DEPTH = 32;\nWIDTH = 11;\nADDRESS_RADIX = HEX;\nDATA_RADIX = BIN;\nCONTENT\nBEGIN\n";
+					for (int i = 0; i < 32; i++) {
+						prefix = prefix.concat(Computer.convertNumber(String.valueOf(i), 10, 16, 2)).concat(" : ");
+						if(pc.getInstructionMemory().getInstruction(i)!=null)
+							prefix = prefix.concat(pc.getInstructionMemory().getInstruction(i).getString()).concat("\n");
+						else
+							prefix = prefix.concat("00000000000\n");
+						
+					}
+					String path = "/home/alp/out.mif";
+					try {
+						Files.write(Paths.get(path), prefix.getBytes(), StandardOpenOption.CREATE);
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					
+
+				    JFileChooser chooser = new JFileChooser();
+				    chooser.setCurrentDirectory(new File("/home/alp"));
+				    chooser.setDialogTitle("Choose location to save your .mif file");
+				    chooser.setSelectedFile(new File("/home/alp/instruction.mif"));
+				    int retrival = chooser.showSaveDialog(null);
+				    if (retrival == JFileChooser.APPROVE_OPTION) {
+				    	String chPath = chooser.getSelectedFile().getAbsolutePath();
+				    	try {
+							Files.write(Paths.get(chPath), prefix.getBytes(), StandardOpenOption.CREATE);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+				    }
+				  
+				}
 			}
+			
 		});
 		btnNewButton.setBounds(385, 442, 117, 25);
 		contentPane.add(btnNewButton);
+		
+		tf_v = new JTextField();
+		tf_v.setEditable(false);
+		tf_v.setBackground(Color.PINK);
+		tf_v.setBounds(121, 445, 25, 19);
+		tf_v.setHorizontalAlignment((JTextField.CENTER));
+		tf_v.setColumns(1);
+		contentPane.add(tf_v);
+		
+		JLabel lblOverflow = new JLabel("Overflow");
+		lblOverflow.setBounds(100, 425, 70, 15);
+		contentPane.add(lblOverflow);
 		tableAssembly.getColumnModel().getColumn(0).setResizable(false);
 		tableAssembly.getColumnModel().getColumn(0).setPreferredWidth(140);
 		tableAssembly.getColumnModel().getColumn(0).setMaxWidth(500);

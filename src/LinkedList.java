@@ -24,7 +24,6 @@ public class LinkedList {
 			return temp.getValue();
 		}
 		Computer.current += 1;
-		System.out.println(Computer.current);
 		return temp.getNext().getValue();
 		
 	}
@@ -57,16 +56,21 @@ public class LinkedList {
 			}
 			temp = temp.getNext();
 		}
-		temp = temp.getNext();
-		Computer.current++;
-		while(temp!=null){
-			if(temp.isEndOfLine()){
-				return temp.getValue();
-			}
+		if(temp.getNext()!=null){
 			temp = temp.getNext();
 			Computer.current++;
+			while(temp!=null){
+				if(temp.isEndOfLine()){
+					return temp.getValue();
+				}
+				temp = temp.getNext();
+				Computer.current++;
+			}
+			return temp.getValue();
 		}
-		return temp.getValue();
+		else{
+			return temp.getValue();
+		}
 	}
 	public State prevLine(){
 		if(Computer.current==0){
@@ -91,6 +95,8 @@ public class LinkedList {
 				}
 				temp = temp.getPrev();
 				Computer.current--;
+				if(Computer.current == 0)
+					return head.getValue();
 			}
 			return temp.getValue();
 			

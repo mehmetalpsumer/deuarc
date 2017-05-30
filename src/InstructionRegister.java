@@ -1,15 +1,18 @@
 
 public class InstructionRegister {
-	Instruction inst;
+	/* Attributes */
+	private Instruction inst;
 	
+	/* Constructor */
 	public InstructionRegister(){
 		inst = null;
+	
 	}
 	
-	public Instruction getInstruction(){
+	/* Functions */
+	public Instruction getInstruction(){	
 		return inst;
 	}
-	
 	public void setInstruction(Instruction inst){
 		this.inst = inst;
 	}

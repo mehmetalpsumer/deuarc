@@ -1,3 +1,4 @@
+package bak1505;
 
 public class Memory {
 	/* Attributes */
@@ -16,9 +17,9 @@ public class Memory {
 	public void add(String val, int index){
 		if(data[index] == null){
 			data[index] = val;
-			/*Main.tableInstruction.getModel().setValueAt(val, index, 1);
+			Main.tableInstruction.getModel().setValueAt(val, index, 1);
 			Main.tableInstruction.getModel().setValueAt(Main.tableInstructionCounter, index, 0);
-			Main.tableInstructionCounter++;*/
+			Main.tableInstructionCounter++;
 		}
 		else
 			System.out.println("The cell is already occupied.");
@@ -29,9 +30,5 @@ public class Memory {
 		if(read) return data[index];
 		System.out.println("Read is not enabled.");
 		return null;
-	}
-	
-	public String[] getData(){
-		return data;
 	}
 }

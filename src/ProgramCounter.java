@@ -1,6 +1,4 @@
-
 public class ProgramCounter{
-	
 	/* Attributes */
 	int data;
 	
@@ -10,14 +8,13 @@ public class ProgramCounter{
 	}
 	
 	/* Methods */
+	public void increase(){
+		data++;
+	}
 	public int getData() {
 		return data;
 	}
 	public void setData(int data) {
 		this.data = data;
 	}
-	public void increase(){
-		data++;
-	}
-
 }
